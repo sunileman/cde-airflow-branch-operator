@@ -94,33 +94,69 @@ dag = DAG(
 def deterministic():
     res = requests.get(url, headers={"Content-Type": "application/json"}, auth=(API_KEY, ""))
 
-    if res.json()['sale-amount'] > 5:
-        branch_name = 'bigSale'
+    if res.json()['dataSet'] > 5:
+        branch_name = 'train'
     else:
-        branch_name = 'smallSale'
+        branch_name = 'test'
     return branch_name
 
 
-brancher = BranchPythonOperator(
+dataFork = BranchPythonOperator(
     dag=dag,
     task_id='branching',
     python_callable=deterministic
 )
 
-bigSale = CMLJobRunOperator(
-    task_id='bigSale',
+fetchSources = CMLJobRunOperator(
+    task_id='fetchSources',
     project=PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
-updateCRM = CMLJobRunOperator(
-    task_id='updateCRM',
+featureEngineering = CMLJobRunOperator(
+    task_id='featureEngineering',
     project=PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
-smallSale = CMLJobRunOperator(
-    task_id='smallSale',
+testDataSetTuning = CMLJobRunOperator(
+    task_id='testDataSetTuning',
+    project=PROJECT_NAME,
+    job='compute-something',
+    dag=dag)
+
+hyperParamTuning = CMLJobRunOperator(
+    task_id='hyperParamTuning',
+    project=PROJECT_NAME,
+    job='compute-something',
+    dag=dag)
+
+fitModel = CMLJobRunOperator(
+    task_id='fitModel',
+    project=PROJECT_NAME,
+    job='compute-something',
+    dag=dag)
+
+modelSelection = CMLJobRunOperator(
+    task_id='modelSelection',
+    project=PROJECT_NAME,
+    job='compute-something',
+    dag=dag)
+
+evalModel = CMLJobRunOperator(
+    task_id='evalModel',
+    project=PROJECT_NAME,
+    job='compute-something',
+    dag=dag)
+
+deployModel = CMLJobRunOperator(
+    task_id='deployModel',
+    project=PROJECT_NAME,
+    job='compute-something',
+    dag=dag)
+
+Scoring = CMLJobRunOperator(
+    task_id='Scoring',
     project=PROJECT_NAME,
     job='compute-something',
     dag=dag)
@@ -128,7 +164,6 @@ smallSale = CMLJobRunOperator(
 start = DummyOperator(task_id='start', dag=dag)
 end = DummyOperator(task_id='end', dag=dag)
 
-start >> brancher
-brancher >> bigSale
-bigSale >> updateCRM >> end
-brancher >> smallSale >> end
+start >> fetchSources >> featureEngineering >> dataFork
+dataFork >> testDataSetTuning >> evalModel >> deployModel >> Scoring >> end
+dataFork >> hyperParamTuning >> fitModel >> modelSelection >> evalModel >> deployModel >> Scoring >> end
