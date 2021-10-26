@@ -5,13 +5,14 @@ from airflow.operators.python import BranchPythonOperator
 from cloudera.cdp.airflow.operators.cde_operator import CDEJobRunOperator
 import requests
 
-HOST = "https://xxxxxx.se-sandb.a465-9q4k.cloudera.site"
+##Youtube Video on how to use this dag: https://youtu.be/sG5vFXyqnog
+CMLHOST = "https://ml-xxxxxxx.a465-9q4k.cloudera.site"
 USERNAME = "sunilemanjee"
-API_KEY = "xxxxxxx"
-PROJECT_NAME = "workflow-orchestration"
+CML_LEGACY_API_KEY = "xxxxxx"
+CML_PROJECT_NAME = "workflow-orchestration"
 jdict = "resources/dic.json"
 
-url = "/".join([HOST, "api/v1/projects", USERNAME, PROJECT_NAME, "files", jdict])
+url = "/".join([CMLHOST, "api/v1/projects", USERNAME, CML_PROJECT_NAME, "files", jdict])
 
 ################## CML OPERATOR CODE START #######################
 from airflow.exceptions import AirflowException
@@ -92,12 +93,12 @@ dag = DAG(
 
 
 def deterministic():
-    res = requests.get(url, headers={"Content-Type": "application/json"}, auth=(API_KEY, ""))
+    res = requests.get(url, headers={"Content-Type": "application/json"}, auth=(CML_LEGACY_API_KEY, ""))
 
-    if res.json()['dataSet'] > 5:
-        branch_name = 'train'
+    if res.json()['dataSet'] > "train":
+        branch_name = 'hyperParamTuning'
     else:
-        branch_name = 'test'
+        branch_name = 'testDataSetTuning'
     return branch_name
 
 
@@ -109,55 +110,55 @@ dataFork = BranchPythonOperator(
 
 fetchSources = CMLJobRunOperator(
     task_id='fetchSources',
-    project=PROJECT_NAME,
+    project=CML_PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
 featureEngineering = CMLJobRunOperator(
     task_id='featureEngineering',
-    project=PROJECT_NAME,
+    project=CML_PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
 testDataSetTuning = CMLJobRunOperator(
     task_id='testDataSetTuning',
-    project=PROJECT_NAME,
+    project=CML_PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
 hyperParamTuning = CMLJobRunOperator(
     task_id='hyperParamTuning',
-    project=PROJECT_NAME,
+    project=CML_PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
 fitModel = CMLJobRunOperator(
     task_id='fitModel',
-    project=PROJECT_NAME,
+    project=CML_PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
 modelSelection = CMLJobRunOperator(
     task_id='modelSelection',
-    project=PROJECT_NAME,
+    project=CML_PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
 evalModel = CMLJobRunOperator(
     task_id='evalModel',
-    project=PROJECT_NAME,
+    project=CML_PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
 deployModel = CMLJobRunOperator(
     task_id='deployModel',
-    project=PROJECT_NAME,
+    project=CML_PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
 Scoring = CMLJobRunOperator(
     task_id='Scoring',
-    project=PROJECT_NAME,
+    project=CML_PROJECT_NAME,
     job='compute-something',
     dag=dag)
 
